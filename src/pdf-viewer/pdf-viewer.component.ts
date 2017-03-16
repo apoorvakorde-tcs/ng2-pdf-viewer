@@ -133,9 +133,16 @@ export class PdfViewerComponent implements OnChanges {
 
     this.removeAllChildNodes(container);
 
-    for (let page = 1; page <= this._pdf.numPages; page++) {
-      this.renderPage(page);
+    const pdfArray = new Array(this._pdf.numPages);
+    for (let page = 1; page <= this._pdf.numPages; ++page) {
+      pdfArray.push(page);
     }
+
+    pdfArray.reduce(function (sequence, page) {
+      return sequence.then(function () {
+        return this.renderPage(page);
+      });
+    }, Promise.resolve());
   }
 
   private isValidPageNumber(page: number) {
@@ -153,8 +160,8 @@ export class PdfViewerComponent implements OnChanges {
 
     textContent.items.forEach(function (textItem) {
       const tx = (<any>window).PDFJS.Util.transform(
-          (<any>window).PDFJS.Util.transform(viewport.transform, textItem.transform),
-          [1, 0, 0, -1, 0, 0]
+        (<any>window).PDFJS.Util.transform(viewport.transform, textItem.transform),
+        [1, 0, 0, -1, 0, 0]
       );
 
       const style = textContent.styles[textItem.fontName];
@@ -166,7 +173,7 @@ export class PdfViewerComponent implements OnChanges {
       line-height: 1;
       white-space: pre;
       cursor: text;
-      font-family: ${ textItem.fontName }, ${ style.fontFamily };
+      font-family: ${ textItem.fontName}, ${style.fontFamily};
       `);
       text.textContent = textItem.str;
       svg.appendChild(text);
@@ -187,7 +194,7 @@ export class PdfViewerComponent implements OnChanges {
   }
 
   private renderPage(pageNumber: number): PDFPromise<void> {
-    return this._pdf.getPage(pageNumber).then( page => {
+    return this._pdf.getPage(pageNumber).then(page => {
       let viewport = page.getViewport(this._zoom, this._rotation);
       let container = this.element.nativeElement.querySelector('div');
       let canvas: HTMLCanvasElement = document.createElement('canvas');
